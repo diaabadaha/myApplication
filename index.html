@@ -105,6 +105,9 @@
   .input,select.input{width:100%;background:var(--surface2);border:1px solid var(--border);
     color:var(--text);border-radius:12px;padding:13px 14px;font-size:16px;outline:none}
   .input:focus{border-color:var(--primary)}
+  input[type="date"].input{display:block;width:100%;min-width:0;max-width:100%;
+    -webkit-appearance:none;appearance:none;min-height:49px}
+  input[type="date"].input::-webkit-date-and-time-value{text-align:left}
   .amount-in{display:flex;gap:10px;align-items:stretch}
   .amount-in .input{font-size:26px;font-weight:700;flex:1;min-width:0}
   .cur-toggle{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
@@ -799,13 +802,13 @@ function refreshCurrent(){ go(document.querySelector('.screen.active').id.replac
 /* ============================================================
    ADD / EDIT transaction (+ templates, last-used, transfers)
    ============================================================ */
-let form={};
+let fm={};
 function openAdd(id){
   const editing=id? S.txns.find(t=>t.id===id):null;
-  if(editing){ form={...editing, tdir: editing.kind==='transfer' ? (editing.account==='savings'?'in':'out') : 'in'}; }
+  if(editing){ fm={...editing, tdir: editing.kind==='transfer' ? (editing.account==='savings'?'in':'out') : 'in'}; }
   else{
     const lu=S.settings.lastUsed.expense||{};
-    form={kind:'expense',amount:'',currency:lu.currency||'ILS',
+    fm={kind:'expense',amount:'',currency:lu.currency||'ILS',
       catId:(S.categories.find(c=>c.id===lu.catId)?lu.catId:S.categories[0].id),
       account:lu.account||'everyday',date:todayStr(),note:'',tdir:'in'};
   }
@@ -814,68 +817,68 @@ function openAdd(id){
 }
 function renderAddSheet(editing){
   const kinds=[['expense','Expense'],['income','Income'],['transfer','Savings']];
-  const cats=form.kind==='income'?S.incomeCats:S.categories;
+  const cats=fm.kind==='income'?S.incomeCats:S.categories;
   let body=`<h3>${editing?'Edit':'Add'} transaction</h3>`;
-  if(!editing && S.templates.length && form.kind==='expense'){
+  if(!editing && S.templates.length && fm.kind==='expense'){
     body+=`<div class="quickrow">${S.templates.map(t=>`<div class="chip" onclick="addFromTemplate('${t.id}')">⚡ ${t.emoji||findCat(t.catId).emoji} ${t.name} · ${CUR[t.currency]}${t.amount}</div>`).join('')}
       <div class="chip mini muted" onclick="openTemplates()">✎</div></div>`;
   }
-  body+=`<div class="seg">${kinds.map(k=>`<button class="${form.kind===k[0]?'on':''}" onclick="setKind('${k[0]}',${editing})">${k[1]}</button>`).join('')}</div>
+  body+=`<div class="seg">${kinds.map(k=>`<button class="${fm.kind===k[0]?'on':''}" onclick="setKind('${k[0]}',${editing})">${k[1]}</button>`).join('')}</div>
   <div class="field"><label>Amount</label><div class="amount-in">
-    <input class="input num" inputmode="decimal" placeholder="0" value="${form.amount||''}" oninput="form.amount=this.value"/>
+    <input class="input num" inputmode="decimal" placeholder="0" value="${fm.amount||''}" oninput="fm.amount=this.value"/>
     <div class="cur-toggle">
-      <button class="${form.currency==='ILS'?'on':''}" onclick="form.currency='ILS';renderAddSheet(${editing})">₪</button>
-      <button class="${form.currency==='USD'?'on':''}" onclick="form.currency='USD';renderAddSheet(${editing})">$</button>
+      <button class="${fm.currency==='ILS'?'on':''}" onclick="fm.currency='ILS';renderAddSheet(${editing})">₪</button>
+      <button class="${fm.currency==='USD'?'on':''}" onclick="fm.currency='USD';renderAddSheet(${editing})">$</button>
     </div></div></div>`;
 
-  if(form.kind==='transfer'){
+  if(fm.kind==='transfer'){
     body+=`<div class="seg">
-      <button class="${form.tdir==='in'?'on':''}" onclick="form.tdir='in';renderAddSheet(${editing})">Into savings</button>
-      <button class="${form.tdir==='out'?'on':''}" onclick="form.tdir='out';renderAddSheet(${editing})">Out of savings</button></div>
-    <div class="field"><label>${form.tdir==='in'?'Put it in':'Take it from'}</label>
+      <button class="${fm.tdir==='in'?'on':''}" onclick="fm.tdir='in';renderAddSheet(${editing})">Into savings</button>
+      <button class="${fm.tdir==='out'?'on':''}" onclick="fm.tdir='out';renderAddSheet(${editing})">Out of savings</button></div>
+    <div class="field"><label>${fm.tdir==='in'?'Put it in':'Take it from'}</label>
       <div class="chips">
-        <div class="chip ${!form.goalId&&!form.potId?'on':''}" onclick="form.goalId=undefined;form.potId=undefined;renderAddSheet(${editing})">Unallocated</div>
-        ${S.pots.map(p=>`<div class="chip ${form.potId===p.id?'on':''}" onclick="form.potId='${p.id}';form.goalId=undefined;renderAddSheet(${editing})">🫙 ${p.name}</div>`).join('')}
-        ${S.goals.map(g=>`<div class="chip ${form.goalId===g.id?'on':''}" onclick="form.goalId='${g.id}';form.potId=undefined;renderAddSheet(${editing})">🎯 ${g.name}</div>`).join('')}
+        <div class="chip ${!fm.goalId&&!fm.potId?'on':''}" onclick="fm.goalId=undefined;fm.potId=undefined;renderAddSheet(${editing})">Unallocated</div>
+        ${S.pots.map(p=>`<div class="chip ${fm.potId===p.id?'on':''}" onclick="fm.potId='${p.id}';fm.goalId=undefined;renderAddSheet(${editing})">🫙 ${p.name}</div>`).join('')}
+        ${S.goals.map(g=>`<div class="chip ${fm.goalId===g.id?'on':''}" onclick="fm.goalId='${g.id}';fm.potId=undefined;renderAddSheet(${editing})">🎯 ${g.name}</div>`).join('')}
       </div>
-      <div class="sub" style="margin-top:8px">${form.tdir==='in'?'Moves money Everyday → Savings.':'Moves money Savings → Everyday.'}</div></div>`;
+      <div class="sub" style="margin-top:8px">${fm.tdir==='in'?'Moves money Everyday → Savings.':'Moves money Savings → Everyday.'}</div></div>`;
   }else{
     body+=`<div class="field"><label>Category</label>
-      <div class="chips">${cats.map(c=>`<div class="chip ${form.catId===c.id?'on':''}" onclick="form.catId='${c.id}';renderAddSheet(${editing})">${c.emoji} ${c.name}</div>`).join('')}</div></div>
+      <div class="chips">${cats.map(c=>`<div class="chip ${fm.catId===c.id?'on':''}" onclick="fm.catId='${c.id}';renderAddSheet(${editing})">${c.emoji} ${c.name}</div>`).join('')}</div></div>
     <div class="field"><label>Account</label><div class="chips">
-      <div class="chip ${form.account==='everyday'?'on':''}" onclick="form.account='everyday';renderAddSheet(${editing})">Everyday</div>
-      <div class="chip ${form.account==='savings'?'on':''}" onclick="form.account='savings';renderAddSheet(${editing})">Savings</div></div></div>`;
+      <div class="chip ${fm.account==='everyday'?'on':''}" onclick="fm.account='everyday';renderAddSheet(${editing})">Everyday</div>
+      <div class="chip ${fm.account==='savings'?'on':''}" onclick="fm.account='savings';renderAddSheet(${editing})">Savings</div></div></div>`;
   }
-  body+=`<div class="field"><label>Date</label><input type="date" class="input" value="${form.date}" oninput="form.date=this.value"/></div>
-    <div class="field"><label>Note (optional)</label><input class="input" placeholder="e.g. lunch with team" value="${form.note||''}" oninput="form.note=this.value"/></div>
-    <button class="btn btn-primary" onclick="saveTxn('${editing?form.id:''}')">${editing?'Save changes':'Add'}</button>
-    ${editing?`<button class="btn btn-danger" onclick="deleteTxn('${form.id}')">Delete</button>`:''}`;
+  body+=`<div class="field"><label>Date</label><input type="date" class="input" value="${fm.date}" oninput="fm.date=this.value"/></div>
+    <div class="field"><label>Note (optional)</label><input class="input" placeholder="e.g. lunch with team" value="${fm.note||''}" oninput="fm.note=this.value"/></div>
+    <button class="btn btn-primary" onclick="saveTxn('${editing?fm.id:''}')">${editing?'Save changes':'Add'}</button>
+    ${editing?`<button class="btn btn-danger" onclick="deleteTxn('${fm.id}')">Delete</button>`:''}`;
   document.getElementById('sheetBody').innerHTML=body;
 }
 function setKind(k,editing){
-  form.kind=k;
-  if(k==='income'&&!S.incomeCats.find(c=>c.id===form.catId))form.catId=S.incomeCats[0].id;
-  if(k==='expense'&&!S.categories.find(c=>c.id===form.catId))form.catId=S.categories[0].id;
+  fm.kind=k;
+  if(k==='income'&&!S.incomeCats.find(c=>c.id===fm.catId))fm.catId=S.incomeCats[0].id;
+  if(k==='expense'&&!S.categories.find(c=>c.id===fm.catId))fm.catId=S.categories[0].id;
   renderAddSheet(editing);
 }
 function saveTxn(id){
-  const amt=parseFloat(form.amount);
+  const amt=parseFloat(fm.amount);
   if(!amt||amt<=0){toast('Enter an amount');return;}
-  const isTr=form.kind==='transfer';
-  const rec={id:id||uid('t_'),date:form.date||todayStr(),kind:form.kind,amount:amt,currency:form.currency,
-    note:form.note||'',
-    catId:isTr?null:form.catId,
-    account:isTr?(form.tdir==='in'?'savings':'everyday'):form.account,
-    goalId:isTr?form.goalId:undefined,
-    potId:isTr?form.potId:undefined};
+  const isTr=fm.kind==='transfer';
+  const rec={id:id||uid('t_'),date:fm.date||todayStr(),kind:fm.kind,amount:amt,currency:fm.currency,
+    note:fm.note||'',
+    catId:isTr?null:fm.catId,
+    account:isTr?(fm.tdir==='in'?'savings':'everyday'):fm.account,
+    goalId:isTr?fm.goalId:undefined,
+    potId:isTr?fm.potId:undefined};
   if(id){const i=S.txns.findIndex(t=>t.id===id);S.txns[i]={...S.txns[i],...rec};}
   else S.txns.push(rec);
-  if(!isTr) S.settings.lastUsed[form.kind]={catId:form.catId,account:form.account,currency:form.currency};
+  if(!isTr) S.settings.lastUsed[fm.kind]={catId:fm.catId,account:fm.account,currency:fm.currency};
   save();closeSheet();refreshCurrent();toast(id?'Updated':'Added');
 }
 function deleteTxn(id){S.txns=S.txns.filter(t=>t.id!==id);save();closeSheet();refreshCurrent();toast('Deleted');}
 function openTransfer(dir){
-  form={kind:'transfer',amount:'',currency:'ILS',date:todayStr(),note:'',tdir:dir||'in'};
+  fm={kind:'transfer',amount:'',currency:'ILS',date:todayStr(),note:'',tdir:dir||'in'};
   renderAddSheet(false);document.getElementById('sheet').classList.add('open');
 }
 function addFromTemplate(tid){
