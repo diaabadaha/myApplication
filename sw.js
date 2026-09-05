@@ -1,5 +1,5 @@
 /* MyFinance service worker — offline cache */
-const CACHE = 'myfinance-v2';
+const CACHE = 'myfinance-v3';
 const ASSETS = [
   './index.html',
   './manifest.webmanifest',
