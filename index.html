@@ -774,7 +774,7 @@ function renderSettings(){
     <div class="sitem" onclick="resetAll()"><span style="color:var(--expense)">Erase all data</span><span class="rv"></span></div>
   </div>
   <input type="file" id="importFile" accept="application/json" class="hide" onchange="importData(event)"/>
-  <div class="sub center">MyFinance · all data stays on this device</div>`;
+  <div class="sub center">MyFinance v2.1 · all data stays on this device</div>`;
   document.getElementById('settingsBody').innerHTML=h;
 }
 
@@ -1291,7 +1291,7 @@ autoPost();
 renderHome();
 if(S.settings.pin) showLock('unlock');
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{}));
 }
 </script>
 </body>
